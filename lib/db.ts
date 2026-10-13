@@ -1,14 +1,23 @@
-import { Pool } from "pg";
-const globalForDb = globalThis as unknown as {
-  pool: Pool | undefined;
-};
+import { Pool, PoolClient } from "pg";
 
-export const db =
-  globalForDb.pool ??
-  new Pool({
-    connectionString: process.env.DATABASE_URL,
-  });
+// One shared Postgres connection pool. In development it is kept on globalThis
+// so hot reloads don't open a new pool every time a file is saved.
+const g = globalThis as { pool?: Pool };
+export const db = g.pool ?? new Pool({ connectionString: process.env.DATABASE_URL });
+g.pool = db;
 
-if (process.env.NODE_ENV !== "production") {
-  globalForDb.pool = db;
+// Runs several queries as one transaction: either all of them are saved or none.
+export async function tx<T>(fn: (client: PoolClient) => Promise<T>) {
+  const client = await db.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await fn(client);
+    await client.query("COMMIT");
+    return result;
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
+  }
 }
