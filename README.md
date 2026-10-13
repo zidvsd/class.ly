@@ -1,5 +1,7 @@
 # Class.ly
 
+Class.ly was built for the **City College of Calamba Hackathon 2026**.
+
 Run classroom quizzes **without internet**. Your laptop is the server. Students join from their phones over the classroom Wi-Fi, answer multiple-choice and JavaScript questions, and are graded automatically. When the quiz ends you download the results as a CSV file.
 
 - No student accounts: students join with a 6-character code and their surname.
